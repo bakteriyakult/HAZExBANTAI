@@ -1,52 +1,43 @@
--- Hapus UI lama jika ada
-if game.CoreGui:FindFirstChild("HAZExBANTAI_V23") then
-    game.CoreGui:FindFirstChild("HAZExBANTAI_V23"):Destroy()
-end
+-- [[ HAZExBANTAI v36 - ULTIMATE STEALTH EDITION ]]
 
-local ScreenGui = Instance.new("ScreenGui")
-local MainFrame = Instance.new("Frame")
-local UIListLayout = Instance.new("UIListLayout")
-
--- [[ STATUS VARIABLE ]]
-local _ACS_BANTAI = false
-local _ANTI_CRIMINAL = false
-local _AUTO_POINTS = false
+local _ACS_MOD = false
+local _ANTI_CRIM = false
+local _STEALTH_GACHA = false
+local _AUTO_KEVLAR = false
+local _FORCE_REGEN = false
 local _UI_VISIBLE = true
 
--- [[ UI SETUP - Dibuat sangat simpel agar pasti muncul ]]
-ScreenGui.Name = "HAZExBANTAI_V23"
-ScreenGui.Parent = game:GetService("CoreGui") or game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
+-- [[ UI SETUP ]]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.Name = "HAZExBANTAI_V36"
 
-MainFrame.Parent = ScreenGui
-MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.5, -90, 0.4, 0)
-MainFrame.Size = UDim2.new(0, 180, 0, 190)
-MainFrame.Active = true
-MainFrame.Draggable = true
-Instance.new("UICorner", MainFrame)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 310)
+Frame.Position = UDim2.new(0.5, -100, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+Frame.Active = true
+Frame.Draggable = true
+Instance.new("UICorner", Frame)
 
-UIListLayout.Parent = MainFrame
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.Padding = UDim.new(0, 8)
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local UIList = Instance.new("UIListLayout", Frame)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.Padding = UDim.new(0, 6)
 
-local Title = Instance.new("TextLabel", MainFrame)
-Title.Text = "HAZExBANTAI"
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "HAZExBANTAI v36"
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.TextColor3 = Color3.fromRGB(255, 0, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
 Title.BackgroundTransparency = 1
 
--- [[ FUNGSI TOMBOL ]]
+-- [[ BUTTON GENERATOR ]]
 local function CreateBtn(name, callback)
-    local Btn = Instance.new("TextButton", MainFrame)
-    Btn.Size = UDim2.new(0.85, 0, 0, 30)
-    Btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    local Btn = Instance.new("TextButton", Frame)
+    Btn.Size = UDim2.new(0.9, 0, 0, 35)
+    Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     Btn.Text = name .. " [OFF]"
-    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.TextColor3 = Color3.fromRGB(180, 180, 180)
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 10
     Instance.new("UICorner", Btn)
@@ -55,45 +46,95 @@ local function CreateBtn(name, callback)
     Btn.MouseButton1Click:Connect(function()
         active = not active
         Btn.Text = name .. (active and " [ON]" or " [OFF]")
-        Btn.TextColor3 = active and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(200, 200, 200)
+        Btn.TextColor3 = active and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(180, 180, 180)
         callback(active)
     end)
 end
 
-CreateBtn("UNLIMITED AMMO", function(v) _ACS_BANTAI = v end)
-CreateBtn("ANTI CRIMINAL", function(v) _ANTI_CRIMINAL = v end)
-CreateBtn("AUTO POINTS", function(v) _AUTO_POINTS = v end)
+-- [[ INTERFACE ]]
+CreateBtn("ACS UNLIMITED AMMO", function(v) _ACS_MOD = v end)
+CreateBtn("ANTI CRIMINAL TEAM", function(v) _ANTI_CRIM = v end)
+CreateBtn("STEALTH GACHA & POINT", function(v) _STEALTH_GACHA = v end)
+CreateBtn("AUTO BUY KEVLAR", function(v) _AUTO_KEVLAR = v end)
+CreateBtn("FORCE REGEN BYPASS", function(v) _FORCE_REGEN = v end)
 CreateBtn("OPEN SIMPLESPY", function() 
     loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))()
 end)
 
--- [[ HIDE UI ]]
-game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
-    if not chat and input.KeyCode == Enum.KeyCode.H then
-        _UI_VISIBLE = not _UI_VISIBLE
-        MainFrame.Visible = _UI_VISIBLE
-    end
-end)
-
--- [[ LOOPING LOGIC ]]
+-- [[ CORE LOGIC ]]
 task.spawn(function()
-    while task.wait(0.8) do
+    while task.wait(0.5) do
+        local lp = game.Players.LocalPlayer
+        local char = lp.Character
+        local rs = game:GetService("ReplicatedStorage")
+        
         pcall(function()
-            local lp = game.Players.LocalPlayer
-            
-            if _ACS_BANTAI then
-                for _, v in pairs(lp.Backpack:GetChildren()) do
-                    local s = v:FindFirstChild("ACS_Settings") or v:FindFirstChild("Settings")
-                    if s then require(s).Ammo = 999 end
+            -- 1. ACS LOGIC
+            if _ACS_MOD then
+                for _, tool in pairs(lp.Backpack:GetChildren()) do
+                    local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
+                    if s then
+                        local t = require(s)
+                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0}
+                    end
                 end
             end
 
-            if _AUTO_POINTS then
-                local remote = game.ReplicatedStorage:FindFirstChild("ClaimGift")
-                if remote then
-                    for i = 1, 12 do remote:FireServer(tostring(i)) end
+            -- 2. ANTI CRIMINAL
+            if _ANTI_CRIM then
+                if lp.Team and (lp.Team.Name == "Criminal" or lp.Team.Name == "Inmate") then
+                    local tr = rs:FindFirstChild("TeamEvent") or rs:FindFirstChild("ChangeTeam")
+                    if tr then tr:FireServer("Civilian") end
+                end
+            end
+
+            -- 3. STEALTH GACHA (3, 6, 9) & NATURAL POINT
+            if _STEALTH_GACHA then
+                local cg = rs:FindFirstChild("ClaimGift")
+                if cg then
+                    -- Snipe Senjata
+                    cg:FireServer("3")
+                    task.wait(0.05)
+                    cg:FireServer("6")
+                    task.wait(0.05)
+                    cg:FireServer("9")
+                    -- Stealth Point (Randomized 1-2)
+                    cg:FireServer(tostring(math.random(1, 2)))
+                end
+                task.wait(math.random(2, 4)) -- Safe delay for Leaderboard
+            end
+
+            -- 4. AUTO KEVLAR
+            if _AUTO_KEVLAR then
+                for _, v in pairs(rs:GetDescendants()) do
+                    if v:IsA("RemoteEvent") and (v.Name:find("Kevlar") or v.Name:find("Armor")) then
+                        v:FireServer()
+                    end
+                end
+            end
+
+            -- 5. REGEN BYPASS
+            if _FORCE_REGEN then
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hum and hum.Health < hum.MaxHealth then
+                    -- Reset Combat & Sync Status
+                    if char:FindFirstChild("InCombat") then char.InCombat.Value = false end
+                    local update = rs:FindFirstChild("UpdateStatus") or rs:FindFirstChild("SyncHealth")
+                    if update then update:FireServer() end
                 end
             end
         end)
+
+        -- Anti-AFK (Stealth)
+        if _STEALTH_GACHA or _ACS_MOD then
+            game:GetService("VirtualUser"):Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end
+    end
+end)
+
+-- Hide System (H)
+game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
+    if not chat and input.KeyCode == Enum.KeyCode.H then
+        Frame.Visible = not Frame.Visible
     end
 end)
