@@ -1,0 +1,193 @@
+local ScreenGui = Instance.new("ScreenGui")
+local MainFrame = Instance.new("Frame")
+local Sidebar = Instance.new("Frame")
+local Content = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local MiniBtn = Instance.new("TextButton")
+local StatusInfo = Instance.new("TextLabel")
+
+-- Setup ScreenGui
+ScreenGui.Name = "HAZExBANTAI_Hub"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+
+-- Main Frame
+MainFrame.Name = "MainFrame"
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -110)
+MainFrame.Size = UDim2.new(0, 350, 0, 220)
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
+-- Sidebar
+Sidebar.Name = "Sidebar"
+Sidebar.Parent = MainFrame
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+Sidebar.Size = UDim2.new(0, 110, 1, 0)
+Instance.new("UICorner", Sidebar)
+
+Title.Parent = Sidebar
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Text = "HAZEx\nBANTAI"
+Title.TextColor3 = Color3.fromRGB(255, 0, 0) -- Merah Garang
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+Title.BackgroundTransparency = 1
+
+StatusInfo.Name = "StatusInfo"
+StatusInfo.Parent = Sidebar
+StatusInfo.Position = UDim2.new(0, 0, 0.85, 0)
+StatusInfo.Size = UDim2.new(1, 0, 0, 30)
+StatusInfo.Text = "SAFE"
+StatusInfo.TextColor3 = Color3.fromRGB(0, 255, 0)
+StatusInfo.Font = Enum.Font.GothamSemibold
+StatusInfo.TextSize = 10
+StatusInfo.BackgroundTransparency = 1
+
+-- Container Pages
+Content.Name = "Content"
+Content.Parent = MainFrame
+Content.Position = UDim2.new(0, 120, 0, 10)
+Content.Size = UDim2.new(0, 220, 0, 200)
+Content.BackgroundTransparency = 1
+
+local CombatPage = Instance.new("Frame", Content)
+CombatPage.Size = UDim2.new(1, 0, 1, 0)
+CombatPage.BackgroundTransparency = 1
+
+local UtilityPage = Instance.new("Frame", Content)
+UtilityPage.Size = UDim2.new(1, 0, 1, 0)
+UtilityPage.BackgroundTransparency = 1
+UtilityPage.Visible = false
+
+local Layout1 = Instance.new("UIListLayout", CombatPage)
+local Layout2 = Instance.new("UIListLayout", UtilityPage)
+Layout1.Padding = UDim.new(0, 8); Layout2.Padding = UDim.new(0, 8)
+
+-- Minimize Button
+MiniBtn.Name = "Minimize"
+MiniBtn.Parent = ScreenGui
+MiniBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+MiniBtn.Position = UDim2.new(0.5, -15, 0.02, 0)
+MiniBtn.Size = UDim2.new(0, 30, 0, 30)
+MiniBtn.Text = "H" -- H for HAZEx
+MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+MiniBtn.Font = Enum.Font.GothamBold
+MiniBtn.Visible = false
+Instance.new("UICorner", MiniBtn)
+
+local function ToggleUI()
+    MainFrame.Visible = not MainFrame.Visible
+    MiniBtn.Visible = not MainFrame.Visible
+end
+
+-- Tombol X
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.Size = UDim2.new(0, 25, 0, 25)
+CloseBtn.Position = UDim2.new(1, -30, 0, 5)
+CloseBtn.Text = "—"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.MouseButton1Click:Connect(ToggleUI)
+MiniBtn.MouseButton1Click:Connect(ToggleUI)
+
+-- Function Create Toggle
+local function CreateToggle(name, parent, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, 0, 0, 40)
+    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Btn.Text = name .. "\n[OFF]"
+    Btn.TextColor3 = Color3.fromRGB(200, 0, 0)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.Parent = parent
+    Instance.new("UICorner", Btn)
+
+    local active = false
+    Btn.MouseButton1Click:Connect(function()
+        active = not active
+        Btn.BackgroundColor3 = active and Color3.fromRGB(150, 0, 0) or Color3.fromRGB(30, 30, 30)
+        Btn.TextColor3 = active and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 0, 0)
+        Btn.Text = active and name .. "\n[ON]" or name .. "\n[OFF]"
+        callback(active)
+    end)
+end
+
+-- Tab Switcher
+local function CreateTab(name, pos, page)
+    local TBtn = Instance.new("TextButton", Sidebar)
+    TBtn.Size = UDim2.new(0.9, 0, 0, 35)
+    TBtn.Position = UDim2.new(0.05, 0, 0, pos)
+    TBtn.Text = name
+    TBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    TBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TBtn.Font = Enum.Font.Gotham
+    Instance.new("UICorner", TBtn)
+    TBtn.MouseButton1Click:Connect(function()
+        CombatPage.Visible = false; UtilityPage.Visible = false
+        page.Visible = true
+    end)
+end
+
+CreateTab("COMBAT", 60, CombatPage)
+CreateTab("UTILITY", 100, UtilityPage)
+
+---------------------------------------------------------
+-- LOGIC HAZExBANTAI
+---------------------------------------------------------
+local _G_ACS = false
+local _G_CLEANER = false
+
+-- ACS Loop
+game:GetService("RunService").RenderStepped:Connect(function()
+    if _G_ACS then
+        local p = game.Players.LocalPlayer
+        local items = {}
+        if p.Character then for _, v in pairs(p.Character:GetChildren()) do table.insert(items, v) end end
+        for _, v in pairs(p.Backpack:GetChildren()) do table.insert(items, v) end
+        for _, tool in pairs(items) do
+            if tool:IsA("Tool") then
+                local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings") or tool:FindFirstChild("GunSettings")
+                if s then
+                    pcall(function()
+                        local t = require(s)
+                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0}; t.Spread = {0,0}
+                        t.AimFOV = 70
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+-- Cleaner & Status Loop
+game:GetService("RunService").Heartbeat:Connect(function()
+    local lp = game.Players.LocalPlayer
+    local isCriminal = lp.Team and string.find(lp.Team.Name, "Criminal")
+    
+    -- Update Status Indikator
+    if isCriminal then
+        StatusInfo.Text = "🚨 CRIMINAL"
+        StatusInfo.TextColor3 = Color3.fromRGB(255, 0, 0)
+        
+        -- Auto Clean Logic
+        if _G_CLEANER then
+            for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
+                if v:IsA("RemoteEvent") and (string.find(v.Name, "Team") or string.find(v.Name, "Change")) then
+                    pcall(function() v:FireServer("Civilian") end)
+                    pcall(function() v:FireServer("Citizen") end)
+                end
+            end
+        end
+    else
+        StatusInfo.Text = "🛡️ SAFE"
+        StatusInfo.TextColor3 = Color3.fromRGB(0, 255, 0)
+    end
+end)
+
+CreateToggle("ACS BANTAI", CombatPage, function(v) _G_ACS = v end)
+CreateToggle("CLEAN CRIMINAL", UtilityPage, function(v) _G_CLEANER = v end)
+
+print("HAZExBANTAI Hub Loaded!")
