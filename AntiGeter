@@ -1,109 +1,49 @@
 -- [[ CONFIGURATION ]]
-local _ACS_MOD = false
-local _ANTI_CRIM = false
 local _STEALTH_FARM = false
-local _AUTO_KEVLAR = false
 
--- [[ UI INITIALIZATION ]]
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or game.Players.LocalPlayer:WaitForChild("PlayerGui"))
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 190, 0, 270)
-Frame.Position = UDim2.new(0.5, -95, 0.4, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-Frame.Active = true
-Frame.Draggable = true
-Instance.new("UICorner", Frame)
-
-local UIList = Instance.new("UIListLayout", Frame)
-UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIList.Padding = UDim.new(0, 7)
-
-local function CreateBtn(name, callback)
-    local Btn = Instance.new("TextButton", Frame)
-    Btn.Size = UDim2.new(0.9, 0, 0, 35)
-    Btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Btn.Text = name .. " [OFF]"
-    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 10
-    Instance.new("UICorner", Btn)
-
-    local active = false
-    Btn.MouseButton1Click:Connect(function()
-        active = not active
-        Btn.Text = name .. (active and " [ON]" or " [OFF]")
-        Btn.TextColor3 = active and Color3.fromRGB(0, 255, 150) or Color3.fromRGB(200, 200, 200)
-        callback(active)
-    end)
-end
-
--- [[ BUTTONS ]]
-CreateBtn("ACS UNLIMITED", function(v) _ACS_MOD = v end)
-CreateBtn("ANTI CRIMINAL", function(v) _ANTI_CRIM = v end)
-CreateBtn("STEALTH GACHA (3,6,9)", function(v) _STEALTH_FARM = v end)
-CreateBtn("AUTO KEVLAR", function(v) _AUTO_KEVLAR = v end)
-
--- [[ CORE LOGIC ]]
+-- [[ LOGIC CORE WITH MONITORING ]]
 task.spawn(function()
+    print("--- HAZExBANTAI MONITOR ACTIVE ---")
+    
     while true do
         task.wait(0.5)
-        local lp = game.Players.LocalPlayer
-        local rs = game:GetService("ReplicatedStorage")
         
-        pcall(function()
-            -- 1. ACS MOD
-            if _ACS_MOD then
-                for _, tool in pairs(lp.Backpack:GetChildren()) do
-                    local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
-                    if s then 
-                        local t = require(s)
-                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0} 
-                    end
-                end
-            end
-
-            -- 2. ANTI CRIMINAL
-            if _ANTI_CRIM then
-                if lp.Team and (lp.Team.Name == "Criminal" or lp.Team.Name == "Inmate") then
-                    local tr = rs:FindFirstChild("TeamEvent", true) or rs:FindFirstChild("ChangeTeam", true)
-                    if tr then tr:FireServer("Civilian") end
-                end
-            end
-
-            -- 3. STEALTH GACHA (Number Argument)
-            if _STEALTH_FARM then
-                local claimGift = rs:FindFirstChild("ClaimGift", true)
-                local giftFolder = rs:FindFirstChild("GiftFolder", true)
-                local shopRemote = rs:FindFirstChild("ShopRemoteEvent", true)
-
-                -- Pemicu status
-                if giftFolder and giftFolder:FindFirstChild("GetClaimed") then
+        if _STEALTH_FARM then
+            local success, err = pcall(function()
+                local rs = game:GetService("ReplicatedStorage")
+                local giftFolder = rs:WaitForChild("GiftFolder", 5)
+                
+                if giftFolder then
+                    -- 1. Cek Status Hadiah
+                    print("Checking Gift Status...")
                     giftFolder.GetClaimed:InvokeServer()
-                end
+                    
+                    -- 2. Proses Ambil Hadiah
+                    local targets = {"3", "6", "9", "1"}
+                    for _, id in ipairs(targets) do
+                        task.spawn(function()
+                            local result = giftFolder.ClaimGift:InvokeServer(id)
+                            -- Jika server mengembalikan jawaban, kita print
+                            print("Attempt Claim Box ["..id.."] | Status: Sent")
+                        end)
+                    end
 
-                -- Eksekusi Gacha (3,6,9) dan Poin (1) sebagai ANGKA
-                if claimGift then
-                    claimGift:FireServer(3)
-                    claimGift:FireServer(6)
-                    claimGift:FireServer(9)
-                    claimGift:FireServer(1) -- Poin halus
+                    -- 3. Sinkronisasi Tas
+                    local shop = rs:FindFirstChild("ShopRemoteEvent", true)
+                    if shop then
+                        shop:FireServer("requestItems")
+                        print("Inventory Synced!")
+                    end
+                else
+                    print("Error: GiftFolder not found!")
                 end
+            end)
 
-                -- Refresh Tas (Temuan kamu saat mati)
-                if shopRemote then
-                    shopRemote:FireServer("requestItems")
-                end
-                task.wait(3) -- Delay Stealth agar Leaderboard aman
+            if not success then
+                print("Critical Error: " .. tostring(err))
             end
-
-            -- 4. AUTO KEVLAR
-            if _AUTO_KEVLAR then
-                local shop = rs:FindFirstChild("ShopRemoteEvent", true)
-                if shop then
-                    shop:FireServer("Kevlar")
-                    shop:FireServer("requestItems")
-                end
-            end
-        end)
+            
+            task.wait(3.5)
+        end
     end
 end)
