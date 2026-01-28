@@ -1,49 +1,88 @@
 -- [[ CONFIGURATION ]]
-local _STEALTH_FARM = false
+local _ACS_MOD = false
+local _ANTI_CRIM = false
 
--- [[ LOGIC CORE WITH MONITORING ]]
+-- [[ UI INITIALIZATION ]]
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui") or game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 180) -- Ukuran diperkecil karena fitur farmer dihapus
+Frame.Position = UDim2.new(0.5, -110, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.Active = true
+Frame.Draggable = true
+Instance.new("UICorner", Frame)
+
+-- Header Title
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "HAZExBANTAI"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+
+local UIList = Instance.new("UIListLayout", Frame)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.Padding = UDim.new(0, 10)
+
+-- Function to Create Professional Buttons
+local function CreateBtn(name, callback)
+    local Btn = Instance.new("TextButton", Frame)
+    Btn.Size = UDim2.new(0.85, 0, 0, 40)
+    Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Btn.Text = name .. " [OFF]"
+    Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 12
+    Instance.new("UICorner", Btn)
+
+    local active = false
+    Btn.MouseButton1Click:Connect(function()
+        active = not active
+        Btn.Text = name .. (active and " [ON]" or " [OFF]")
+        Btn.BackgroundColor3 = active and Color3.fromRGB(0, 150, 255) or Color3.fromRGB(40, 40, 40)
+        callback(active)
+    end)
+end
+
+-- [[ BUTTON ACTIONS ]]
+
+-- 1. ACS Mod: Unlimited Ammo & No Recoil
+CreateBtn("ACS MOD", function(state) 
+    _ACS_MOD = state 
+end)
+
+-- 2. Anti-Criminal: Auto Change Team to Civilian
+CreateBtn("ANTI CRIMINAL", function(state) 
+    _ANTI_CRIM = state 
+end)
+
+-- [[ CORE LOGIC LOOP ]]
 task.spawn(function()
-    print("--- HAZExBANTAI MONITOR ACTIVE ---")
-    
     while true do
         task.wait(0.5)
-        
-        if _STEALTH_FARM then
-            local success, err = pcall(function()
-                local rs = game:GetService("ReplicatedStorage")
-                local giftFolder = rs:WaitForChild("GiftFolder", 5)
-                
-                if giftFolder then
-                    -- 1. Cek Status Hadiah
-                    print("Checking Gift Status...")
-                    giftFolder.GetClaimed:InvokeServer()
-                    
-                    -- 2. Proses Ambil Hadiah
-                    local targets = {"3", "6", "9", "1"}
-                    for _, id in ipairs(targets) do
-                        task.spawn(function()
-                            local result = giftFolder.ClaimGift:InvokeServer(id)
-                            -- Jika server mengembalikan jawaban, kita print
-                            print("Attempt Claim Box ["..id.."] | Status: Sent")
-                        end)
-                    end
+        local lp = game.Players.LocalPlayer
+        local rs = game:GetService("ReplicatedStorage")
 
-                    -- 3. Sinkronisasi Tas
-                    local shop = rs:FindFirstChild("ShopRemoteEvent", true)
-                    if shop then
-                        shop:FireServer("requestItems")
-                        print("Inventory Synced!")
+        pcall(function()
+            -- ACS Logic: Mengatur peluru dan stabilitas senjata
+            if _ACS_MOD then
+                for _, tool in pairs(lp.Backpack:GetChildren()) do
+                    local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
+                    if s then 
+                        local t = require(s)
+                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0}; t.Spread = {0,0} 
                     end
-                else
-                    print("Error: GiftFolder not found!")
                 end
-            end)
-
-            if not success then
-                print("Critical Error: " .. tostring(err))
             end
-            
-            task.wait(3.5)
-        end
+
+            -- Anti-Criminal Logic: Memaksa pemain tetap di tim aman
+            if _ANTI_CRIM then
+                local teamEvent = rs:FindFirstChild("TeamEvent", true) or rs:FindFirstChild("ChangeTeam", true)
+                if teamEvent and lp.Team and lp.Team.Name ~= "Civilian" then
+                    teamEvent:FireServer("Civilian")
+                end
+            end
+        end)
     end
 end)
