@@ -3,13 +3,12 @@ local MainFrame = Instance.new("Frame")
 local Title = Instance.new("TextLabel")
 local Info = Instance.new("TextLabel")
 
--- [[ STATUS VARIABLE ]]
 local _ACS_BANTAI = false
 local _ANTI_CRIMINAL = false
 local _AUTO_POINTS = false
 local _UI_VISIBLE = true
 
--- [[ SETUP UI ]]
+-- [[ UI SETUP ]]
 ScreenGui.Name = "HAZExBANTAI"
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
@@ -17,7 +16,7 @@ ScreenGui.ResetOnSpawn = false
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 200, 0, 150) -- Ukuran ditambah sedikit
+MainFrame.Size = UDim2.new(0, 200, 0, 150)
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
@@ -31,7 +30,7 @@ Title.TextSize = 14
 Title.BackgroundTransparency = 1
 
 Info.Parent = MainFrame
-Info.Text = "Press 'H' (Hz) to Hide/Show"
+Info.Text = "Press 'H' to Hide/Show"
 Info.Size = UDim2.new(1, 0, 0, 20)
 Info.Position = UDim2.new(0, 0, 1, -20)
 Info.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -39,7 +38,6 @@ Info.Font = Enum.Font.Gotham
 Info.TextSize = 10
 Info.BackgroundTransparency = 1
 
--- [[ FUNGSI TOGGLE ]]
 local function CreateButton(name, pos, callback)
     local Btn = Instance.new("TextButton", MainFrame)
     Btn.Size = UDim2.new(0.9, 0, 0, 30)
@@ -64,7 +62,6 @@ CreateButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
 CreateButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
 CreateButton("AUTO FARM POINTS", 105, function(v) _AUTO_POINTS = v end)
 
--- [[ HIDE UI ]]
 game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
     if not chat and input.KeyCode == Enum.KeyCode.H then
         _UI_VISIBLE = not _UI_VISIBLE
@@ -72,63 +69,40 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
     end
 end)
 
--- [[ LOGIC METHODS ]]
+-- [[ LOGIC ]]
 
--- 1. ACS LOGIC
+-- ACS & Anti-Criminal (Metode Awal)
 spawn(function()
     while true do
         if _ACS_BANTAI then
             pcall(function()
-                local player = game.Players.LocalPlayer
-                local function mod(tool)
-                    if tool:IsA("Tool") then
-                        local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
-                        if s then
-                            local t = require(s)
-                            t.Ammo = 999; t.StoredAmmo = 999
-                            t.Recoil = {0,0}; t.Spread = {0,0}
-                        end
+                for _, v in pairs(game.Players.LocalPlayer.Backpack:GetChildren()) do
+                    local s = v:FindFirstChild("ACS_Settings") or v:FindFirstChild("Settings")
+                    if s then
+                        local t = require(s)
+                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0}; t.Spread = {0,0}
                     end
                 end
-                for _, v in pairs(player.Backpack:GetChildren()) do mod(v) end
-                if player.Character then for _, v in pairs(player.Character:GetChildren()) do mod(v) end end
             end)
         end
         wait(0.5)
     end
 end)
 
--- 2. ANTI CRIMINAL LOGIC
+-- AUTO FARM POINTS FIX
 spawn(function()
     while true do
-        if _ANTI_CRIMINAL then
+        if _AUTO_POINTS then
             pcall(function()
-                local lp = game.Players.LocalPlayer
-                if lp.Team and (string.find(lp.Team.Name, "Criminal") or string.find(lp.Team.Name, "Inmate")) then
-                    for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
-                        if v:IsA("RemoteEvent") and (v.Name == "TeamEvent" or string.find(v.Name, "Team")) then
-                            v:FireServer("Civilian")
-                        end
+                local remote = game:GetService("ReplicatedStorage"):FindFirstChild("ClaimGift")
+                if remote then
+                    -- Mencoba mengirim klaim 1-12 dengan format String (teks)
+                    for i = 1, 12 do
+                        remote:FireServer(tostring(i))
                     end
                 end
             end)
         end
-        wait(1)
-    end
-end)
-
--- 3. AUTO FARM POINTS (BERDASARKAN ANALISIS GAMBAR)
-spawn(function()
-    local remote = game:GetService("ReplicatedStorage"):WaitForChild("ClaimGift")
-    while true do
-        if _AUTO_POINTS then
-            pcall(function()
-                -- Mengirim klaim gift 1 sampai 12 (asumsi ada banyak slot hadiah)
-                for i = 1, 12 do
-                    remote:FireServer(tostring(i))
-                end
-            end)
-        end
-        wait(0.1) -- Delay sangat cepat untuk spam points
+        wait(1) -- Jeda 1 detik agar tidak terdeteksi spamming oleh server
     end
 end)
