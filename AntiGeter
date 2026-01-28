@@ -1,29 +1,41 @@
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HAZExBANTAI_V13"
+ScreenGui.Name = "HAZExBANTAI"
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
 
 -- [[ VARIABLE LOCAL ]]
 local _ACS_BANTAI = false
 local _ANTI_CRIMINAL = false
+local _UI_VISIBLE = true
+local _HIDE_KEY = Enum.KeyCode.Hz -- Tombol untuk Hide/Show UI
 
 -- [[ UI COMPACT SETUP ]]
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50) -- Posisi tengah layar
-MainFrame.Size = UDim2.new(0, 200, 0, 110) -- Ukuran diperkecil drastis
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
+MainFrame.Size = UDim2.new(0, 200, 0, 110)
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
 
--- Nama UI (Judul)
+-- Judul UI
 local Title = Instance.new("TextLabel", MainFrame)
-Title.Text = "HAZExBANTAI V13"
+Title.Text = "HAZExBANTAI"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.TextColor3 = Color3.fromRGB(255, 0, 0)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
 Title.BackgroundTransparency = 1
+
+-- Label Info Hide
+local Info = Instance.new("TextLabel", MainFrame)
+Info.Text = "Press 'K' to Hide/Show"
+Info.Size = UDim2.new(1, 0, 0, 20)
+Info.Position = UDim2.new(0, 0, 1, -20)
+Info.TextColor3 = Color3.fromRGB(150, 150, 150)
+Info.Font = Enum.Font.Gotham
+Info.TextSize = 10
+Info.BackgroundTransparency = 1
 
 -- [[ FUNGSI TOGGLE SIMPEL ]]
 local function CreateSimpleButton(name, pos, callback)
@@ -46,17 +58,22 @@ local function CreateSimpleButton(name, pos, callback)
     end)
 end
 
--- Tombol 1: Unlimited Ammo (Logika ACS Bantai)
 CreateSimpleButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
-
--- Tombol 2: Anti Criminal
 CreateSimpleButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
 
+-- [[ FUNGSI HIDE UI ]]
+game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
+    if not chat and input.KeyCode == _HIDE_KEY then
+        _UI_VISIBLE = not _UI_VISIBLE
+        MainFrame.Visible = _UI_VISIBLE
+    end
+end)
+
 ---------------------------------------------------------
--- LOGIKA FITUR (TETAP MENGGUNAKAN LOCAL VARIABLE)
+-- LOGIKA FITUR
 ---------------------------------------------------------
 
--- ACS LOOP (Ammo, No Recoil, No Spread)
+-- ACS LOOP
 game:GetService("RunService").Heartbeat:Connect(function()
     if _ACS_BANTAI then
         pcall(function()
@@ -89,12 +106,3 @@ game:GetService("RunService").Heartbeat:Connect(function()
         end
     end
 end)
-
--- Tombol Close/Minimize Kecil di pojok
-local Close = Instance.new("TextButton", MainFrame)
-Close.Text = "X"
-Close.Size = UDim2.new(0, 20, 0, 20)
-Close.Position = UDim2.new(1, -25, 0, 5)
-Close.BackgroundTransparency = 1
-Close.TextColor3 = Color3.fromRGB(255, 255, 255)
-Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
