@@ -6,6 +6,7 @@ local Info = Instance.new("TextLabel")
 -- [[ STATUS VARIABLE ]]
 local _ACS_BANTAI = false
 local _ANTI_CRIMINAL = false
+local _AUTO_POINTS = false
 local _UI_VISIBLE = true
 
 -- [[ SETUP UI ]]
@@ -16,7 +17,7 @@ ScreenGui.ResetOnSpawn = false
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 200, 0, 115)
+MainFrame.Size = UDim2.new(0, 200, 0, 150) -- Ukuran ditambah sedikit
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
@@ -30,7 +31,7 @@ Title.TextSize = 14
 Title.BackgroundTransparency = 1
 
 Info.Parent = MainFrame
-Info.Text = "Press 'H' to Hide/Show"
+Info.Text = "Press 'H' (Hz) to Hide/Show"
 Info.Size = UDim2.new(1, 0, 0, 20)
 Info.Position = UDim2.new(0, 0, 1, -20)
 Info.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -61,8 +62,9 @@ end
 
 CreateButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
 CreateButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
+CreateButton("AUTO FARM POINTS", 105, function(v) _AUTO_POINTS = v end)
 
--- [[ HIDE UI SYSTEM ]]
+-- [[ HIDE UI ]]
 game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
     if not chat and input.KeyCode == Enum.KeyCode.H then
         _UI_VISIBLE = not _UI_VISIBLE
@@ -70,61 +72,63 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
     end
 end)
 
--- [[ ORIGINAL LOGIC METHOD ]]
+-- [[ LOGIC METHODS ]]
 
--- ACS LOGIC (Metode Awal)
+-- 1. ACS LOGIC
 spawn(function()
     while true do
         if _ACS_BANTAI then
             pcall(function()
                 local player = game.Players.LocalPlayer
-                local character = player.Character
-                local backpack = player.Backpack
-                
                 local function mod(tool)
                     if tool:IsA("Tool") then
-                        local settings = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
-                        if settings then
-                            local config = require(settings)
-                            config.Ammo = 999
-                            config.StoredAmmo = 999
-                            config.Recoil = {0, 0}
-                            config.Spread = {0, 0}
-                            config.AimRecoil = {0, 0}
-                            config.FastReload = true
-                            config.ReloadTime = 0
+                        local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
+                        if s then
+                            local t = require(s)
+                            t.Ammo = 999; t.StoredAmmo = 999
+                            t.Recoil = {0,0}; t.Spread = {0,0}
                         end
                     end
                 end
-
-                for _, v in pairs(backpack:GetChildren()) do mod(v) end
-                if character then
-                    for _, v in pairs(character:GetChildren()) do mod(v) end
-                end
+                for _, v in pairs(player.Backpack:GetChildren()) do mod(v) end
+                if player.Character then for _, v in pairs(player.Character:GetChildren()) do mod(v) end end
             end)
         end
-        wait(0.3)
+        wait(0.5)
     end
 end)
 
--- ANTI CRIMINAL LOGIC (Metode Awal - Remote Spam)
+-- 2. ANTI CRIMINAL LOGIC
 spawn(function()
     while true do
         if _ANTI_CRIMINAL then
             pcall(function()
                 local lp = game.Players.LocalPlayer
-                -- Cek jika tim mengandung kata Criminal atau Inmate
                 if lp.Team and (string.find(lp.Team.Name, "Criminal") or string.find(lp.Team.Name, "Inmate")) then
-                    -- Mencari remote di ReplicatedStorage (Metode paling awal)
                     for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
-                        if v:IsA("RemoteEvent") and (v.Name == "TeamEvent" or string.find(v.Name, "Team") or string.find(v.Name, "Change")) then
+                        if v:IsA("RemoteEvent") and (v.Name == "TeamEvent" or string.find(v.Name, "Team")) then
                             v:FireServer("Civilian")
-                            v:FireServer("Citizen")
                         end
                     end
                 end
             end)
         end
         wait(1)
+    end
+end)
+
+-- 3. AUTO FARM POINTS (BERDASARKAN ANALISIS GAMBAR)
+spawn(function()
+    local remote = game:GetService("ReplicatedStorage"):WaitForChild("ClaimGift")
+    while true do
+        if _AUTO_POINTS then
+            pcall(function()
+                -- Mengirim klaim gift 1 sampai 12 (asumsi ada banyak slot hadiah)
+                for i = 1, 12 do
+                    remote:FireServer(tostring(i))
+                end
+            end)
+        end
+        wait(0.1) -- Delay sangat cepat untuk spam points
     end
 end)
