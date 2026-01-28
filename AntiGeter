@@ -1,55 +1,40 @@
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HAZExBANTAI_V11"
+ScreenGui.Name = "HAZExBANTAI_V13"
 ScreenGui.Parent = game.CoreGui
 ScreenGui.ResetOnSpawn = false
 
--- [[ VARIABLE LOCAL - STATUS ]]
+-- [[ VARIABLE LOCAL ]]
 local _ACS_BANTAI = false
 local _ANTI_CRIMINAL = false
 
--- [[ FUNGSI NOTIFIKASI ]]
-local function Notify(title, text)
-    local NotificationGui = Instance.new("ScreenGui", game.CoreGui)
-    local Frame = Instance.new("Frame", NotificationGui)
-    Frame.Size = UDim2.new(0, 220, 0, 60)
-    Frame.Position = UDim2.new(1, -230, 1, -100)
-    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    Instance.new("UICorner", Frame)
-    
-    local Tl = Instance.new("TextLabel", Frame)
-    Tl.Text = " " .. title; Tl.Size = UDim2.new(1, 0, 0.4, 0); Tl.TextColor3 = Color3.fromRGB(255, 0, 0); Tl.BackgroundTransparency = 1; Tl.Font = Enum.Font.GothamBold; Tl.TextXAlignment = Enum.TextXAlignment.Left
-    
-    local Tx = Instance.new("TextLabel", Frame)
-    Tx.Text = " " .. text; Tx.Size = UDim2.new(1, 0, 0.6, 0); Tx.Position = UDim2.new(0, 0, 0.4, 0); Tx.TextColor3 = Color3.fromRGB(255, 255, 255); Tx.BackgroundTransparency = 1; Tx.Font = Enum.Font.Gotham; Tx.TextXAlignment = Enum.TextXAlignment.Left
-    
-    task.delay(3, function() NotificationGui:Destroy() end)
-end
-
--- [[ UI SETUP ]]
+-- [[ UI COMPACT SETUP ]]
 local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15); MainFrame.Position = UDim2.new(0.5, -200, 0.5, -140); MainFrame.Size = UDim2.new(0, 420, 0, 300); MainFrame.Active = true; MainFrame.Draggable = true
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50) -- Posisi tengah layar
+MainFrame.Size = UDim2.new(0, 200, 0, 110) -- Ukuran diperkecil drastis
+MainFrame.Active = true
+MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
 
-local Sidebar = Instance.new("Frame", MainFrame)
-Sidebar.BackgroundColor3 = Color3.fromRGB(10, 10, 10); Sidebar.Size = UDim2.new(0, 120, 1, 0)
-Instance.new("UICorner", Sidebar)
+-- Nama UI (Judul)
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "HAZExBANTAI V13"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.TextColor3 = Color3.fromRGB(255, 0, 0)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 14
+Title.BackgroundTransparency = 1
 
-local Content = Instance.new("Frame", MainFrame)
-Content.Position = UDim2.new(0, 130, 0, 10); Content.Size = UDim2.new(0, 280, 0, 280); Content.BackgroundTransparency = 1
-
-local CombatPage = Instance.new("ScrollingFrame", Content)
-local UtilityPage = Instance.new("ScrollingFrame", Content)
-
-for _, p in pairs({CombatPage, UtilityPage}) do
-    p.Size = UDim2.new(1, 0, 1, 0); p.BackgroundTransparency = 1; p.Visible = false; p.ScrollBarThickness = 0
-    Instance.new("UIListLayout", p).Padding = UDim.new(0, 5)
-end
-CombatPage.Visible = true
-
--- [[ FUNGSI TOGGLE ]]
-local function CreateToggle(name, parent, callback)
-    local Btn = Instance.new("TextButton", parent)
-    Btn.Size = UDim2.new(0.95, 0, 0, 35); Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25); Btn.Text = name .. " [OFF]"; Btn.TextColor3 = Color3.fromRGB(200, 0, 0); Btn.Font = Enum.Font.GothamBold
+-- [[ FUNGSI TOGGLE SIMPEL ]]
+local function CreateSimpleButton(name, pos, callback)
+    local Btn = Instance.new("TextButton", MainFrame)
+    Btn.Size = UDim2.new(0.9, 0, 0, 30)
+    Btn.Position = UDim2.new(0.05, 0, 0, pos)
+    Btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    Btn.Text = name .. " [OFF]"
+    Btn.TextColor3 = Color3.fromRGB(200, 0, 0)
+    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 12
     Instance.new("UICorner", Btn)
 
     local active = false
@@ -61,48 +46,37 @@ local function CreateToggle(name, parent, callback)
     end)
 end
 
--- [[ TAB BUILDER ]]
-local function AddTab(name, pos, page)
-    local T = Instance.new("TextButton", Sidebar)
-    T.Size = UDim2.new(0.9, 0, 0, 35); T.Position = UDim2.new(0.05, 0, 0, pos); T.Text = name; T.BackgroundColor3 = Color3.fromRGB(20, 20, 20); T.TextColor3 = Color3.fromRGB(255, 255, 255); T.Font = Enum.Font.Gotham
-    Instance.new("UICorner", T)
-    T.MouseButton1Click:Connect(function() 
-        CombatPage.Visible = false; UtilityPage.Visible = false; 
-        page.Visible = true 
-    end)
-end
+-- Tombol 1: Unlimited Ammo (Logika ACS Bantai)
+CreateSimpleButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
 
-AddTab("COMBAT", 60, CombatPage)
-AddTab("UTILITY", 100, UtilityPage)
+-- Tombol 2: Anti Criminal
+CreateSimpleButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
 
 ---------------------------------------------------------
--- LOGIKA FITUR (MENGGUNAKAN LOCAL VARIABLE)
+-- LOGIKA FITUR (TETAP MENGGUNAKAN LOCAL VARIABLE)
 ---------------------------------------------------------
 
--- 1. ACS LOOP
+-- ACS LOOP (Ammo, No Recoil, No Spread)
 game:GetService("RunService").Heartbeat:Connect(function()
     if _ACS_BANTAI then
         pcall(function()
-            local player = game.Players.LocalPlayer
-            local items = player.Backpack:GetChildren()
-            if player.Character then
-                for _, v in pairs(player.Character:GetChildren()) do table.insert(items, v) end
-            end
-            
-            for _, tool in pairs(items) do
-                if tool:IsA("Tool") then
-                    local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
-                    if s then
-                        local t = require(s)
-                        t.Ammo = 999; t.StoredAmmo = 999; t.Recoil = {0,0}; t.Spread = {0,0}
-                    end
+            local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
+            if tool then
+                local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
+                if s then
+                    local t = require(s)
+                    t.Ammo = 999
+                    t.StoredAmmo = 999
+                    t.Recoil = {0,0}; t.AimRecoil = {0,0}
+                    t.Spread = {0,0}; t.MaxSpread = 0
+                    t.FastReload = true; t.ReloadTime = 0
                 end
             end
         end)
     end
 end)
 
--- 2. ANTI-CRIMINAL LOOP
+-- ANTI-CRIMINAL LOOP
 game:GetService("RunService").Heartbeat:Connect(function()
     if _ANTI_CRIMINAL then
         local lp = game.Players.LocalPlayer
@@ -116,17 +90,11 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 
--- [[ CALLBACKS ]]
-CreateToggle("ACS Bantai", CombatPage, function(v) _ACS_BANTAI = v end)
-CreateToggle("Anti Criminal", UtilityPage, function(v) _ANTI_CRIMINAL = v end)
-
--- [[ MINIMIZE ]]
-local MiniBtn = Instance.new("TextButton", ScreenGui)
-MiniBtn.Size = UDim2.new(0, 45, 0, 45); MiniBtn.Position = UDim2.new(0, 10, 0.4, 0); MiniBtn.Text = "H"; MiniBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0); MiniBtn.TextColor3 = Color3.fromRGB(255, 255, 255); MiniBtn.Font = Enum.Font.GothamBold; MiniBtn.Visible = false; MiniBtn.Draggable = true; Instance.new("UICorner", MiniBtn).CornerRadius = UDim.new(1, 0)
-MiniBtn.MouseButton1Click:Connect(function() MainFrame.Visible = true; MiniBtn.Visible = false end)
-
-local CloseBtn = Instance.new("TextButton", MainFrame)
-CloseBtn.Text = "—"; CloseBtn.Size = UDim2.new(0, 30, 0, 30); CloseBtn.Position = UDim2.new(1, -35, 0, 5); CloseBtn.BackgroundTransparency = 1; CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseBtn.MouseButton1Click:Connect(function() MainFrame.Visible = false; MiniBtn.Visible = true end)
-
-Notify("HAZExBANTAI", "V11 Fixed Local Loaded!")
+-- Tombol Close/Minimize Kecil di pojok
+local Close = Instance.new("TextButton", MainFrame)
+Close.Text = "X"
+Close.Size = UDim2.new(0, 20, 0, 20)
+Close.Position = UDim2.new(1, -25, 0, 5)
+Close.BackgroundTransparency = 1
+Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+Close.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
