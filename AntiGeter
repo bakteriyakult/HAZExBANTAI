@@ -1,25 +1,27 @@
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "HAZExBANTAI_V15"
-ScreenGui.Parent = game.CoreGui
-ScreenGui.ResetOnSpawn = false
+local MainFrame = Instance.new("Frame")
+local Title = Instance.new("TextLabel")
+local Info = Instance.new("TextLabel")
 
--- [[ VARIABLE LOCAL ]]
+-- [[ STATUS VARIABLE ]]
 local _ACS_BANTAI = false
 local _ANTI_CRIMINAL = false
 local _UI_VISIBLE = true
-local _HIDE_KEY = Enum.KeyCode.H -- Menggunakan tombol 'H' untuk inisial Hz
 
--- [[ UI COMPACT SETUP ]]
-local MainFrame = Instance.new("Frame", ScreenGui)
+-- [[ SETUP UI ]]
+ScreenGui.Name = "HAZExBANTAI"
+ScreenGui.Parent = game.CoreGui
+ScreenGui.ResetOnSpawn = false
+
+MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.Position = UDim2.new(0.5, -100, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 200, 0, 110)
+MainFrame.Size = UDim2.new(0, 200, 0, 115)
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame)
 
--- Judul UI (V14 Dihapus)
-local Title = Instance.new("TextLabel", MainFrame)
+Title.Parent = MainFrame
 Title.Text = "HAZExBANTAI"
 Title.Size = UDim2.new(1, 0, 0, 30)
 Title.TextColor3 = Color3.fromRGB(255, 0, 0)
@@ -27,18 +29,17 @@ Title.Font = Enum.Font.GothamBold
 Title.TextSize = 14
 Title.BackgroundTransparency = 1
 
--- Label Info Hide (Berubah ke Hz/H)
-local Info = Instance.new("TextLabel", MainFrame)
-Info.Text = "Press 'H' (Hz) to Hide/Show"
+Info.Parent = MainFrame
+Info.Text = "Press 'H' to Hide/Show"
 Info.Size = UDim2.new(1, 0, 0, 20)
 Info.Position = UDim2.new(0, 0, 1, -20)
-Info.TextColor3 = Color3.fromRGB(150, 150, 150)
+Info.TextColor3 = Color3.fromRGB(120, 120, 120)
 Info.Font = Enum.Font.Gotham
 Info.TextSize = 10
 Info.BackgroundTransparency = 1
 
--- [[ FUNGSI TOGGLE SIMPEL ]]
-local function CreateSimpleButton(name, pos, callback)
+-- [[ FUNGSI TOGGLE ]]
+local function CreateButton(name, pos, callback)
     local Btn = Instance.new("TextButton", MainFrame)
     Btn.Size = UDim2.new(0.9, 0, 0, 30)
     Btn.Position = UDim2.new(0.05, 0, 0, pos)
@@ -58,51 +59,72 @@ local function CreateSimpleButton(name, pos, callback)
     end)
 end
 
-CreateSimpleButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
-CreateSimpleButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
+CreateButton("UNLIMITED AMMO", 35, function(v) _ACS_BANTAI = v end)
+CreateButton("ANTI CRIMINAL", 70, function(v) _ANTI_CRIMINAL = v end)
 
--- [[ FUNGSI HIDE UI DENGAN TOMBOL H (Hz) ]]
+-- [[ HIDE UI SYSTEM ]]
 game:GetService("UserInputService").InputBegan:Connect(function(input, chat)
-    if not chat and input.KeyCode == _HIDE_KEY then
+    if not chat and input.KeyCode == Enum.KeyCode.H then
         _UI_VISIBLE = not _UI_VISIBLE
         MainFrame.Visible = _UI_VISIBLE
     end
 end)
 
----------------------------------------------------------
--- LOGIKA FITUR
----------------------------------------------------------
+-- [[ ORIGINAL LOGIC METHOD ]]
 
--- ACS LOOP
-game:GetService("RunService").Heartbeat:Connect(function()
-    if _ACS_BANTAI then
-        pcall(function()
-            local tool = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Tool")
-            if tool then
-                local s = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
-                if s then
-                    local t = require(s)
-                    t.Ammo = 999
-                    t.StoredAmmo = 999
-                    t.Recoil = {0,0}; t.AimRecoil = {0,0}
-                    t.Spread = {0,0}; t.MaxSpread = 0
-                    t.FastReload = true; t.ReloadTime = 0
+-- ACS LOGIC (Metode Awal)
+spawn(function()
+    while true do
+        if _ACS_BANTAI then
+            pcall(function()
+                local player = game.Players.LocalPlayer
+                local character = player.Character
+                local backpack = player.Backpack
+                
+                local function mod(tool)
+                    if tool:IsA("Tool") then
+                        local settings = tool:FindFirstChild("ACS_Settings") or tool:FindFirstChild("Settings")
+                        if settings then
+                            local config = require(settings)
+                            config.Ammo = 999
+                            config.StoredAmmo = 999
+                            config.Recoil = {0, 0}
+                            config.Spread = {0, 0}
+                            config.AimRecoil = {0, 0}
+                            config.FastReload = true
+                            config.ReloadTime = 0
+                        end
+                    end
                 end
-            end
-        end)
+
+                for _, v in pairs(backpack:GetChildren()) do mod(v) end
+                if character then
+                    for _, v in pairs(character:GetChildren()) do mod(v) end
+                end
+            end)
+        end
+        wait(0.3)
     end
 end)
 
--- ANTI-CRIMINAL LOOP
-game:GetService("RunService").Heartbeat:Connect(function()
-    if _ANTI_CRIMINAL then
-        local lp = game.Players.LocalPlayer
-        if lp.Team and (string.find(lp.Team.Name, "Criminal") or string.find(lp.Team.Name, "Inmate")) then
-            for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
-                if v:IsA("RemoteEvent") and (string.find(v.Name, "Team") or string.find(v.Name, "Change")) then
-                    v:FireServer("Civilian")
+-- ANTI CRIMINAL LOGIC (Metode Awal - Remote Spam)
+spawn(function()
+    while true do
+        if _ANTI_CRIMINAL then
+            pcall(function()
+                local lp = game.Players.LocalPlayer
+                -- Cek jika tim mengandung kata Criminal atau Inmate
+                if lp.Team and (string.find(lp.Team.Name, "Criminal") or string.find(lp.Team.Name, "Inmate")) then
+                    -- Mencari remote di ReplicatedStorage (Metode paling awal)
+                    for _, v in pairs(game.ReplicatedStorage:GetDescendants()) do
+                        if v:IsA("RemoteEvent") and (v.Name == "TeamEvent" or string.find(v.Name, "Team") or string.find(v.Name, "Change")) then
+                            v:FireServer("Civilian")
+                            v:FireServer("Citizen")
+                        end
+                    end
                 end
-            end
+            end)
         end
+        wait(1)
     end
 end)
